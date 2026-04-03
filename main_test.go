@@ -112,3 +112,66 @@ func TestCafeCount(t *testing.T) {
 		})
 	}
 }
+
+// TestCafeSearch verifies the search functionality for cafes within a specific city.
+// It uses a table-driven approach to validate the following scenarios:
+// 1. Returns an empty list when no cafes match the search query.
+// 2. Returns the correct number of matches for a partial, case-insensitive string.
+// 3. Ensures that every cafe name in the response actually contains the search term.
+//
+// The test simulates HTTP GET requests using httptest.NewRecorder and
+// validates both the HTTP status code and the response body content.
+func TestCafeSearch(t *testing.T) {
+	handler := http.HandlerFunc(mainHandle)
+	city := "moscow"
+
+	requests := []struct {
+		name      string
+		search    string
+		wantCount int
+	}{
+		{
+			name:      "Search 'фасоль' - no results",
+			search:    "фасоль",
+			wantCount: 0,
+		},
+		{
+			name:      "Search 'кофе' - two results",
+			search:    "кофе",
+			wantCount: 2,
+		},
+		{
+			name:      "Search 'вилка' - one result",
+			search:    "вилка",
+			wantCount: 1,
+		},
+	}
+
+	for _, v := range requests {
+		t.Run(v.name, func(t *testing.T) {
+			url := fmt.Sprintf("/cafe?city=%s&search=%s", city, v.search)
+			req := httptest.NewRequest("GET", url, nil)
+			response := httptest.NewRecorder()
+
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(t, http.StatusOK, response.Code)
+
+			body := response.Body.String()
+			var cafes []string
+			if body != "" {
+				cafes = strings.Split(body, ",")
+			}
+
+			assert.Len(t, cafes, v.wantCount, "Search for '%s' expected %d cafes, got %d", v.search, v.wantCount, len(cafes))
+
+			for _, cafeName := range cafes {
+				contains := strings.Contains(
+					strings.ToLower(cafeName),
+					strings.ToLower(v.search),
+				)
+				assert.True(t, contains, "Cafe name '%s' must contain search string '%s'", cafeName, v.search)
+			}
+		})
+	}
+}
