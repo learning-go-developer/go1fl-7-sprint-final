@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -89,9 +90,13 @@ func TestCafeCount(t *testing.T) {
 
 	for _, v := range requests {
 		t.Run(v.name, func(t *testing.T) {
-			url := fmt.Sprintf("/cafe?city=%s&count=%d", city, v.count)
+			params := url.Values{}
+			params.Add("city", city)
+			params.Add("count", strconv.Itoa(v.count))
 
-			req := httptest.NewRequest("GET", url, nil)
+			path := "/cafe?" + params.Encode()
+
+			req := httptest.NewRequest("GET", path, nil)
 			response := httptest.NewRecorder()
 
 			handler.ServeHTTP(response, req)
@@ -114,13 +119,10 @@ func TestCafeCount(t *testing.T) {
 }
 
 // TestCafeSearch verifies the search functionality for cafes within a specific city.
-// It uses a table-driven approach to validate the following scenarios:
-// 1. Returns an empty list when no cafes match the search query.
-// 2. Returns the correct number of matches for a partial, case-insensitive string.
-// 3. Ensures that every cafe name in the response actually contains the search term.
-//
-// The test simulates HTTP GET requests using httptest.NewRecorder and
-// validates both the HTTP status code and the response body content.
+// It uses a table-driven approach to validate:
+// 1. Empty results for non-matching queries.
+// 2. Case-insensitive partial string matching.
+// 3. Presence of the search term in every returned cafe name.
 func TestCafeSearch(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	city := "moscow"
@@ -149,8 +151,13 @@ func TestCafeSearch(t *testing.T) {
 
 	for _, v := range requests {
 		t.Run(v.name, func(t *testing.T) {
-			url := fmt.Sprintf("/cafe?city=%s&search=%s", city, v.search)
-			req := httptest.NewRequest("GET", url, nil)
+			params := url.Values{}
+			params.Add("city", city)
+			params.Add("search", v.search)
+
+			path := "/cafe?" + params.Encode()
+
+			req := httptest.NewRequest("GET", path, nil)
 			response := httptest.NewRecorder()
 
 			handler.ServeHTTP(response, req)
