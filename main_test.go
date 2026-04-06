@@ -173,11 +173,7 @@ func TestCafeSearch(t *testing.T) {
 			assert.Len(t, cafes, v.wantCount, "Search for '%s' expected %d cafes, got %d", v.search, v.wantCount, len(cafes))
 
 			for _, cafeName := range cafes {
-				contains := strings.Contains(
-					strings.ToLower(cafeName),
-					strings.ToLower(v.search),
-				)
-				assert.True(t, contains, "Cafe name '%s' must contain search string '%s'", cafeName, v.search)
+				assert.Containsf(t, strings.ToLower(cafeName), strings.ToLower(v.search), "Cafe name '%s' must contain search string '%s'", cafeName, v.search)
 			}
 		})
 	}
