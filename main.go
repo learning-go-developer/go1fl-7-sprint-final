@@ -20,7 +20,7 @@ func mainHandle(w http.ResponseWriter, req *http.Request) {
 	countStr := req.FormValue("count")
 	if countStr != "" {
 		count, err = strconv.Atoi(countStr)
-		if err != nil {
+		if err != nil || count < 0 {
 			http.Error(w, "incorrect count", http.StatusBadRequest)
 			return
 		}
